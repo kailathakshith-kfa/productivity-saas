@@ -48,11 +48,30 @@ function LoginForm() {
         // Ensure next is in formData if present (though hidden input handles it usually, explicit append is safer if we manually construct, but native form data picks up inputs)
 
         if (isLogin) {
-            await login(formData)
+            try {
+                await login(formData)
+            } catch (err: any) {
+                // Ignore redirect errors (successful login)
+                if (err?.digest?.startsWith('NEXT_REDIRECT')) {
+                    throw err
+                }
+                console.error("Login Error:", err)
+                setError(err.message || "Authentication connection failed. Please try again.")
+                setLoading(false)
+            }
         } else {
-            await signup(formData)
+            try {
+                await signup(formData)
+            } catch (err: any) {
+                if (err?.digest?.startsWith('NEXT_REDIRECT')) {
+                    throw err
+                }
+                console.error("Signup Error:", err)
+                setError(err.message || "Signup connection failed. Please try again.")
+                setLoading(false)
+            }
         }
-        setLoading(false)
+        // Loading state is handled in catch or persists during redirect
     }
 
     return (
