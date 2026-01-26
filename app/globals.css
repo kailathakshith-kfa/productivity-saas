@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-dark: #020408;
+  /* Deepest Void */
+  --color-brand-surface: #0B0E14;
+  /* Smooth Charcoal */
+  --color-brand-navy: #151923;
+  /* Rich Navy */
+
+  --color-brand-cyan: #22d3ee;
+  /* Electric Cyan */
+  --color-brand-glow: #818cf8;
+  /* Indigo Glow */
+  --color-brand-accent: #38bdf8;
+  /* Sky Blue */
+
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --shadow-glow: 0 0 20px -5px var(--color-brand-cyan);
+}
+
+@layer base {
+  body {
+    @apply bg-brand-dark text-neutral-300 antialiased selection:bg-brand-cyan/20 selection:text-brand-cyan tracking-tight;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    /* Better legibility */
+  }
+}
+
+/* Luxury Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-white/20 rounded-full hover:bg-white/40 transition-all;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Million Dollar Glass */
+  .glass {
+    @apply bg-brand-surface/60 backdrop-blur-2xl border border-white/[0.08] shadow-2xl;
+  }
+
+  /* Gradient Text - The "Vercel/Stripe" look */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-linear-to-r from-white via-neutral-200 to-neutral-400;
+  }
+
+  .text-gradient-cyan {
+    @apply bg-clip-text text-transparent bg-linear-to-r from-brand-cyan to-brand-glow;
+  }
+
+  /* Ultra Premium Card */
+  .premium-card {
+    @apply rounded-2xl border border-white/[0.06] bg-brand-surface/40 backdrop-blur-xl p-6 transition-all duration-500 hover:border-white/[0.12] hover:bg-brand-surface/60;
+    background-image: radial-gradient(circle at top left, rgba(255, 255, 255, 0.03), transparent 40%);
+  }
+
+  .premium-card:hover {
+    box-shadow: 0 0 30px -10px rgba(6, 182, 212, 0.15);
+  }
+
+  /* Subtle Mesh Background */
+  .mesh-bg {
+    background-image:
+      radial-gradient(circle at 15% 50%, rgba(34, 211, 238, 0.05), transparent 25%),
+      radial-gradient(circle at 85% 30%, rgba(99, 102, 241, 0.05), transparent 25%);
+  }
+}
+
+/* Lenis Smooth Scroll */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
