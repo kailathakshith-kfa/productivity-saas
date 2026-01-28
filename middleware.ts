@@ -6,9 +6,17 @@ export async function middleware(request: NextRequest) {
         request,
     })
 
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        // If env vars are missing, we can't use Supabase.
+        // Return response as is to avoid crashing, but auth won't work.
+        // This prevents the "Unexpected response" 500 error on the client.
+        console.warn('Middleware: Missing Supabase environment variables. Authentication will not work.')
+        return supabaseResponse
+    }
+
     const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
         {
             cookies: {
                 getAll() {
