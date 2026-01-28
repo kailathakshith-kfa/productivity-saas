@@ -198,6 +198,23 @@ export default function SettingsPage() {
                 </div>
             </div>
 
+            {/* Support Section */}
+            <div className="premium-card">
+                <div className="flex items-center gap-4 mb-4">
+                    <User className="h-6 w-6 text-brand-cyan" />
+                    <div>
+                        <h2 className="text-lg font-semibold text-white">Support & Contact</h2>
+                        <p className="text-sm text-neutral-400">Need help or have feedback? Reach out to us.</p>
+                    </div>
+                </div>
+                <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                    <p className="text-sm text-neutral-300 mb-2">For any issues, bug reports, or feature requests:</p>
+                    <a href="mailto:info@kineticflowai.com" className="text-brand-cyan hover:underline font-medium">
+                        info@kineticflowai.com
+                    </a>
+                </div>
+            </div>
+
             {/* Security Section (Sign Out) */}
             <div className="rounded-2xl border border-red-500/20 bg-gradient-to-br from-red-500/5 to-transparent p-6 hover:border-red-500/40 transition-colors">
                 <div className="flex items-center gap-4 mb-6">

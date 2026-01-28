@@ -403,7 +403,10 @@ export default function LandingPage() {
             </main>
 
             <footer className="border-t border-white/5 py-12 bg-[#050b14] text-center">
-                <p className="text-neutral-600 text-sm">© 2026 Kinetic Flow AI. Built for Executors.</p>
+                <p className="text-neutral-600 text-sm mb-2">© 2026 Kinetic Flow AI. Built for Executors.</p>
+                <a href="mailto:info@kineticflowai.com" className="text-neutral-500 text-sm hover:text-brand-cyan transition-colors">
+                    Contact: info@kineticflowai.com
+                </a>
             </footer>
         </div >
     )
