@@ -1,10 +1,15 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
-export async function login(formData: FormData) {
+export type AuthActionResult = {
+    success: boolean
+    message?: string
+    redirect?: string
+}
+
+export async function login(formData: FormData): Promise<AuthActionResult> {
     try {
         const supabase = await createClient()
 
@@ -17,25 +22,22 @@ export async function login(formData: FormData) {
         })
 
         if (error) {
-            redirect(`/login?message=${encodeURIComponent(error.message)}`)
+            return { success: false, message: error.message }
         }
 
         revalidatePath('/', 'layout')
         const next = formData.get('next') as string
         if (next && next.startsWith('/')) {
-            redirect(next)
+            return { success: true, redirect: next }
         }
-        redirect('/dashboard')
+        return { success: true, redirect: '/dashboard' }
     } catch (error: any) {
-        if (error?.digest?.startsWith('NEXT_REDIRECT')) {
-            throw error
-        }
         console.error('Login Error:', error)
-        redirect(`/login?message=${encodeURIComponent('System Error: ' + (error.message || 'Unknown error occurred'))}`)
+        return { success: false, message: 'System Error: ' + (error.message || 'Unknown error occurred') }
     }
 }
 
-export async function signup(formData: FormData) {
+export async function signup(formData: FormData): Promise<AuthActionResult> {
     try {
         const supabase = await createClient()
 
@@ -49,24 +51,21 @@ export async function signup(formData: FormData) {
 
         if (error) {
             console.error('Signup error:', error)
-            redirect(`/login?message=${encodeURIComponent(error.message)}`)
+            return { success: false, message: error.message }
         }
 
         if (data.user && !data.session) {
-            redirect('/login?message=Account created! Please check your email to confirm.')
+            return { success: false, message: 'Account created! Please check your email to confirm.' } // technically success but no login yet
         }
 
         revalidatePath('/', 'layout')
         const next = formData.get('next') as string
         if (next && next.startsWith('/')) {
-            redirect(next)
+            return { success: true, redirect: next }
         }
-        redirect('/dashboard')
+        return { success: true, redirect: '/dashboard' }
     } catch (error: any) {
-        if (error?.digest?.startsWith('NEXT_REDIRECT')) {
-            throw error
-        }
         console.error('Signup System Error:', error)
-        redirect(`/login?message=${encodeURIComponent('System Error: ' + (error.message || 'Unknown error occurred'))}`)
+        return { success: false, message: 'System Error: ' + (error.message || 'Unknown error occurred') }
     }
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { login, signup } from './actions'
 import { ArrowRight, Loader2, Sparkles } from 'lucide-react'
@@ -31,6 +31,8 @@ function LoginForm() {
         return disposableDomains.includes(domain)
     }
 
+    const router = useRouter()
+
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
         setError(null)
@@ -47,31 +49,28 @@ function LoginForm() {
 
         // Ensure next is in formData if present (though hidden input handles it usually, explicit append is safer if we manually construct, but native form data picks up inputs)
 
-        if (isLogin) {
-            try {
-                await login(formData)
-            } catch (err: any) {
-                // Ignore redirect errors (successful login)
-                if (err?.digest?.startsWith('NEXT_REDIRECT')) {
-                    throw err
-                }
-                console.error("Login Error:", err)
-                setError(err.message || "Authentication connection failed. Please try again.")
+        try {
+            let result
+            if (isLogin) {
+                result = await login(formData)
+            } else {
+                result = await signup(formData)
+            }
+
+            if (result.success && result.redirect) {
+                router.push(result.redirect)
+                // Keep loading true while redirecting
+            } else if (result.message) {
+                setError(result.message)
+                setLoading(false)
+            } else {
                 setLoading(false)
             }
-        } else {
-            try {
-                await signup(formData)
-            } catch (err: any) {
-                if (err?.digest?.startsWith('NEXT_REDIRECT')) {
-                    throw err
-                }
-                console.error("Signup Error:", err)
-                setError(err.message || "Signup connection failed. Please try again.")
-                setLoading(false)
-            }
+        } catch (err: any) {
+            console.error("Submission Error:", err)
+            setError("Connection failed. Please check your internet or try again.")
+            setLoading(false)
         }
-        // Loading state is handled in catch or persists during redirect
     }
 
     return (
