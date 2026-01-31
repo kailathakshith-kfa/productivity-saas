@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { User, Bell, Shield, LogOut, Check, Zap, Eye, EyeOff } from 'lucide-react'
+import { Ticket, User, Bell, Shield, LogOut, Check, Zap, Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { RazorpayButton } from '@/components/checkout/RazorpayButton'
+import { redeemCoupon } from '@/lib/actions/coupon-actions'
 
 export default function SettingsPage() {
     const router = useRouter()
@@ -24,6 +25,11 @@ export default function SettingsPage() {
     const [passwordError, setPasswordError] = useState('')
     const [passwordSuccess, setPasswordSuccess] = useState('')
     const [showPassword, setShowPassword] = useState(false)
+
+    // Coupon State
+    const [couponCode, setCouponCode] = useState('')
+    const [couponLoading, setCouponLoading] = useState(false)
+    const [couponMessage, setCouponMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -104,6 +110,28 @@ export default function SettingsPage() {
             setTimeout(() => setPasswordSuccess(''), 3000)
         }
         setPasswordLoading(false)
+    }
+
+    const handleRedeemCoupon = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setCouponLoading(true)
+        setCouponMessage(null)
+
+        const formData = new FormData()
+        formData.append('code', couponCode)
+
+        const result = await redeemCoupon(formData)
+
+        if (result.error) {
+            setCouponMessage({ type: 'error', text: result.error })
+            setCouponLoading(false)
+        } else {
+            setCouponMessage({ type: 'success', text: `Coupon redeemed! You are now on the ${result.plan === 'elite' ? 'Elite' : 'Ultimate'} Plan.` })
+            setPlan(result.plan!)
+            setCouponCode('')
+            setCouponLoading(false)
+            router.refresh()
+        }
     }
 
     return (
@@ -252,6 +280,43 @@ export default function SettingsPage() {
                             />
                         )}
                     </div>
+                </div>
+
+                {/* Redeem Coupon */}
+                <div className="premium-card">
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="h-10 w-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                            <Ticket className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-semibold text-white">Redeem Coupon</h2>
+                            <p className="text-xs text-neutral-400">Have a promo code? Enter it below.</p>
+                        </div>
+                    </div>
+
+                    <form onSubmit={handleRedeemCoupon} className="flex gap-4 items-start">
+                        <div className="flex-1 space-y-2">
+                            <input
+                                type="text"
+                                placeholder="ENTER CODE"
+                                value={couponCode}
+                                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                className="w-full rounded-lg bg-black/50 border border-white/10 px-4 py-2 text-white placeholder:text-neutral-600 focus:border-emerald-500/50 outline-none transition-all uppercase tracking-wide"
+                            />
+                            {couponMessage && (
+                                <p className={`text-xs ${couponMessage.type === 'success' ? 'text-emerald-400' : 'text-red-400'}`}>
+                                    {couponMessage.text}
+                                </p>
+                            )}
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={couponLoading || !couponCode}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded-lg font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                        >
+                            {couponLoading ? 'Checking...' : 'Apply'}
+                        </button>
+                    </form>
                 </div>
             </div>
 
