@@ -7,6 +7,7 @@ import { login, signup } from './actions'
 import { ArrowRight, Loader2, Sparkles, ArrowLeft, Mail, Lock, Eye, EyeOff, Check, Shield } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import Image from 'next/image'
 
 function LoginForm() {
     const searchParams = useSearchParams()
@@ -15,11 +16,11 @@ function LoginForm() {
     const mode = searchParams.get('mode')
 
     const [isLogin, setIsLogin] = useState(mode !== 'signup')
-    const [isForgotPassword, setIsForgotPassword] = useState(false) // New State
+    const [isForgotPassword, setIsForgotPassword] = useState(false)
     const [loading, setLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
     const [rememberMe, setRememberMe] = useState(true)
-    const [successMsg, setSuccessMsg] = useState<string | null>(null) // Local success msg for reset
+    const [successMsg, setSuccessMsg] = useState<string | null>(null)
 
     const [error, setError] = useState<string | null>(null)
 
@@ -35,13 +36,13 @@ function LoginForm() {
     }
 
     const router = useRouter()
-    const supabase = createClient() // Initialize client
+    const supabase = createClient()
 
     const handleResetPassword = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
         setLoading(true)
         setError(null)
-        setSuccessMsg(null) // Clear previous
+        setSuccessMsg(null)
 
         const formData = new FormData(event.currentTarget)
         const email = formData.get('email') as string
@@ -55,7 +56,6 @@ function LoginForm() {
                 setError(error.message)
             } else {
                 setSuccessMsg('Check your email for the password reset link.')
-                // Optional: switch back to login after delay or keep showing success
             }
         } catch (err: any) {
             setError("Failed to send reset email.")
@@ -70,7 +70,6 @@ function LoginForm() {
             return
         }
 
-        // ... (existing login/signup logic)
         event.preventDefault()
         setError(null)
         setLoading(true)
@@ -79,7 +78,6 @@ function LoginForm() {
         const formData = new FormData(event.currentTarget)
         const email = formData.get('email') as string
 
-        // ... Check disposable email logic ... (keep it)
         if (isDisposableEmail(email)) {
             setError("Temporary/Disposable emails are not allowed. Please use a valid work or personal email.")
             setLoading(false)
@@ -109,8 +107,6 @@ function LoginForm() {
         }
     }
 
-    // ...
-
     return (
         <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-brand-dark text-white selection:bg-brand-cyan/30">
             {/* Background Effects */}
@@ -139,8 +135,17 @@ function LoginForm() {
                 <div className="glass overflow-hidden rounded-3xl border border-white/10 p-8 shadow-2xl backdrop-blur-xl">
                     {/* Header */}
                     <div className="mb-8 text-center">
-                        <div className="mb-4 inline-flex items-center justify-center rounded-2xl bg-gradient-to-br from-brand-cyan/20 to-brand-accent/10 p-3 shadow-inner ring-1 ring-white/10">
-                            <Sparkles className="h-6 w-6 text-brand-cyan" />
+                        <div className="mb-6 flex justify-center">
+                            <div className="relative h-16 w-16 overflow-hidden rounded-2xl bg-gradient-to-br from-brand-cyan/10 to-brand-accent/5 p-0.5 shadow-inner ring-1 ring-white/10">
+                                <div className="absolute inset-0 bg-black/40" />
+                                <Image
+                                    src="/logo.png"
+                                    alt="Kinetic Flow AI"
+                                    width={64}
+                                    height={64}
+                                    className="relative h-full w-full object-contain p-2"
+                                />
+                            </div>
                         </div>
                         <h1 className="mb-2 text-2xl font-bold tracking-tight text-white">
                             {isForgotPassword ? 'Reset Password' : (isLogin ? 'Welcome Back' : 'Create Account')}
