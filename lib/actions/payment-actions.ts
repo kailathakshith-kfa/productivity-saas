@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-export async function createRazorpayOrder(plan: 'elite' | 'ai_ultimate') {
+export async function createRazorpaySubscription(plan: 'elite' | 'ai_ultimate') {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -14,13 +14,13 @@ export async function createRazorpayOrder(plan: 'elite' | 'ai_ultimate') {
         return { error: 'Please login to subscribe' }
     }
 
-    const plans = {
-        'elite': 19900, // ₹199
-        'ai_ultimate': 29900 // ₹299
-    }
+    const planId = plan === 'elite'
+        ? process.env.NEXT_PUBLIC_RAZORPAY_ELITE_PLAN_ID
+        : process.env.NEXT_PUBLIC_RAZORPAY_ULTIMATE_PLAN_ID
 
-    const amount = plans[plan]
-    if (!amount) throw new Error('Invalid plan')
+    if (!planId) {
+        return { error: 'Subscription plan not configured' }
+    }
 
     const keyId = process.env.RAZORPAY_KEY_ID
     const keySecret = process.env.RAZORPAY_KEY_SECRET
@@ -35,31 +35,34 @@ export async function createRazorpayOrder(plan: 'elite' | 'ai_ultimate') {
         key_secret: keySecret,
     })
 
-    const options = {
-        amount: amount, // ₹199.00 in paise
-        currency: "INR",
-        receipt: `receipt_${Date.now()}_${user.id.slice(0, 5)}`,
-        notes: {
-            plan: plan
-        }
-    }
-
     try {
-        console.log('Creating Razorpay Order:', options)
-        const order = await razorpay.orders.create(options)
-        console.log('Order created:', order.id)
-        return { orderId: order.id, amount: order.amount, currency: order.currency, keyId: keyId }
+        const subscription = await razorpay.subscriptions.create({
+            plan_id: planId,
+            total_count: 60, // 5 years monthly
+            quantity: 1,
+            customer_notify: 1,
+            notes: {
+                userId: user.id,
+                planType: plan
+            }
+        })
+
+        return {
+            subscriptionId: subscription.id,
+            keyId: keyId,
+            // Subscriptions don't need amount passed to checkout, it's in the plan
+        }
     } catch (error: any) {
-        console.error('Razorpay Error Details:', JSON.stringify(error, null, 2))
-        return { error: `Failed to create order: ${error.error?.description || error.message || 'Unknown error'}` }
+        console.error('Razorpay Subscription Error:', JSON.stringify(error, null, 2))
+        return { error: `Failed to create subscription: ${error.error?.description || error.message}` }
     }
 }
 
 export async function verifyPayment(response: any, planId: string) {
     const crypto = require('crypto')
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = response
+    const { razorpay_subscription_id, razorpay_payment_id, razorpay_signature } = response
 
-    const body = razorpay_order_id + "|" + razorpay_payment_id
+    const body = razorpay_payment_id + "|" + razorpay_subscription_id
     const secret = process.env.RAZORPAY_KEY_SECRET?.trim()
     if (!secret) throw new Error('Razorpay Secret Missing')
 
@@ -67,8 +70,6 @@ export async function verifyPayment(response: any, planId: string) {
         .createHmac("sha256", secret)
         .update(body.toString())
         .digest("hex")
-
-    /* Debug logs removed for production */
 
     if (expectedSignature === razorpay_signature) {
         // Payment valid
@@ -88,13 +89,13 @@ export async function verifyPayment(response: any, planId: string) {
                     user_id: user.id,
                     plan: planId,
                     payment_id: razorpay_payment_id,
+                    subscription_id: razorpay_subscription_id, // Store sub ID
                     status: 'active',
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'user_id' })
             error = upsertError
         } else {
-            // Fallback to RPC (Less Secure)
-            console.warn("Using RPC fallback for subscription. Add SUPABASE_SERVICE_ROLE_KEY for better security.")
+            console.warn("Using RPC fallback for subscription.")
             const { error: rpcError } = await supabase.rpc('upsert_subscription', {
                 p_plan: planId,
                 p_payment_id: razorpay_payment_id
@@ -104,7 +105,7 @@ export async function verifyPayment(response: any, planId: string) {
 
         if (error) {
             console.error('Subscription update failed:', error)
-            return { error: 'Failed to update subscription' }
+            return { error: 'Failed to update subscription in DB' }
         }
 
         revalidatePath('/dashboard')

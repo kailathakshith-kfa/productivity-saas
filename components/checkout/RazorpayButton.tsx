@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { createRazorpayOrder, verifyPayment } from '@/lib/actions/payment-actions'
+import { createRazorpaySubscription, verifyPayment } from '@/lib/actions/payment-actions'
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -40,8 +40,8 @@ export function RazorpayButton({
             return
         }
 
-        // 2. Create Order
-        const result = await createRazorpayOrder(planId)
+        // 2. Create Subscription
+        const result = await createRazorpaySubscription(planId)
         if (result.error) {
             // Check for authentication error
             if (result.error.toLowerCase().includes('login') || result.error.includes('unauthorized')) {
@@ -55,30 +55,21 @@ export function RazorpayButton({
         }
 
         // 3. Open Checkout
-        const { orderId, amount, currency, keyId } = result
+        const { subscriptionId, keyId } = result
 
         const options = {
             key: keyId,
-            amount: amount,
-            currency: currency,
+            subscription_id: subscriptionId,
             name: "Kinetic Flow AI",
-            description: `${planId === 'elite' ? 'Elite' : 'AI Ultimate'} Subscription`,
-            order_id: orderId,
+            description: `${planId === 'elite' ? 'Elite' : 'AI Ultimate'} Monthly Subscription`,
             handler: async function (response: any) {
-                // Try standard signature verification
-                let verifyRes = await verifyPayment(response, planId)
-
-                // Fallback: Check status directly with Razorpay if signature fails
-                if (!verifyRes.success) {
-                    // Import dynamically if needed or just assume it's available in scope if I import it at top
-                    // Assuming forceVerifyPayment is exported from same file
-                    const { forceVerifyPayment } = await import('@/lib/actions/payment-actions')
-                    verifyRes = await forceVerifyPayment(response.razorpay_payment_id)
-                }
+                // Verify Subscription Signature
+                const verifyRes = await verifyPayment(response, planId)
 
                 if (verifyRes.success) {
-                    alert(`Payment Successful! Welcome to ${planId === 'elite' ? 'Elite' : 'Ultimate'}.`)
+                    alert(`Subscription Successful! Welcome to ${planId === 'elite' ? 'Elite' : 'Ultimate'}.`)
                     router.push('/dashboard')
+                    router.refresh()
                 } else {
                     alert('Payment Verification Failed: ' + (verifyRes.error || 'Unknown Error'))
                 }
