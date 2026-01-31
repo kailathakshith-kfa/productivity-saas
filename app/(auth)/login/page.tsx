@@ -23,7 +23,16 @@ function LoginForm() {
 
     const [error, setError] = useState<string | null>(null)
 
-    // ... (disposableDomains logic)
+    const disposableDomains = [
+        'mailinator.com', 'yopmail.com', 'guerrillamail.com', 'temp-mail.org',
+        '10minutemail.com', 'trashmail.com', 'sharklasers.com', 'tempmail.com',
+        'getnada.com', 'dispostable.com', 'grr.la', 'maildrop.cc'
+    ]
+
+    const isDisposableEmail = (email: string) => {
+        const domain = email.split('@')[1]
+        return disposableDomains.includes(domain)
+    }
 
     const router = useRouter()
     const supabase = createClient() // Initialize client
@@ -241,7 +250,6 @@ function LoginForm() {
                 </div>
             </motion.div>
         </div>
-        </div >
     )
 }
 
