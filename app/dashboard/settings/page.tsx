@@ -18,6 +18,12 @@ export default function SettingsPage() {
     const [lastName, setLastName] = useState('')
     const [email, setEmail] = useState('')
 
+    const [newPassword, setNewPassword] = useState('')
+    const [confirmPassword, setConfirmPassword] = useState('')
+    const [passwordLoading, setPasswordLoading] = useState(false)
+    const [passwordError, setPasswordError] = useState('')
+    const [passwordSuccess, setPasswordSuccess] = useState('')
+
     useEffect(() => {
         const fetchUserData = async () => {
             const { data: { user } } = await supabase.auth.getUser()
@@ -67,6 +73,36 @@ export default function SettingsPage() {
             setTimeout(() => setSuccessMessage(''), 3000)
             router.refresh()
         }
+    }
+
+    const handlePasswordUpdate = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (newPassword !== confirmPassword) {
+            setPasswordError("Passwords do not match")
+            return
+        }
+        if (newPassword.length < 6) {
+            setPasswordError("Password must be at least 6 characters")
+            return
+        }
+
+        setPasswordLoading(true)
+        setPasswordError('')
+        setPasswordSuccess('')
+
+        const { error } = await supabase.auth.updateUser({
+            password: newPassword
+        })
+
+        if (error) {
+            setPasswordError(error.message)
+        } else {
+            setPasswordSuccess("Password updated successfully")
+            setNewPassword('')
+            setConfirmPassword('')
+            setTimeout(() => setPasswordSuccess(''), 3000)
+        }
+        setPasswordLoading(false)
     }
 
     return (
@@ -246,25 +282,68 @@ export default function SettingsPage() {
                 </div>
             </div>
 
-            {/* Security Section (Sign Out) */}
+            {/* Security Section (Combined) */}
             <div className="rounded-2xl border border-red-500/20 bg-gradient-to-br from-red-500/5 to-transparent p-6 hover:border-red-500/40 transition-colors">
                 <div className="flex items-center gap-4 mb-6">
                     <Shield className="h-6 w-6 text-red-400" />
-                    <h2 className="text-lg font-semibold text-white">Security & Session</h2>
+                    <h2 className="text-lg font-semibold text-white">Security & Password</h2>
                 </div>
 
-                <div className="flex items-center justify-between">
-                    <div>
-                        <p className="text-sm text-neutral-300">Log out of this device</p>
-                        <p className="text-xs text-neutral-500">You will need to sign in again to access your dashboard.</p>
+                <div className="space-y-6">
+                    {/* Password Change Form */}
+                    <form onSubmit={handlePasswordUpdate} className="space-y-4 border-b border-red-500/20 pb-6 mb-6">
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-neutral-400 uppercase">New Password</label>
+                                <input
+                                    type="password"
+                                    placeholder="••••••••"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    className="w-full rounded-lg bg-black/50 border border-white/10 px-4 py-2 text-white focus:border-red-400/50 outline-none transition-all placeholder:text-neutral-600"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-neutral-400 uppercase">Confirm Password</label>
+                                <input
+                                    type="password"
+                                    placeholder="••••••••"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    className="w-full rounded-lg bg-black/50 border border-white/10 px-4 py-2 text-white focus:border-red-400/50 outline-none transition-all placeholder:text-neutral-600"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                            <div>
+                                {passwordSuccess && <span className="text-xs text-emerald-400">{passwordSuccess}</span>}
+                                {passwordError && <span className="text-xs text-red-400">{passwordError}</span>}
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={passwordLoading}
+                                className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-300 text-sm font-medium rounded-lg border border-red-500/30 transition shadow-[0_0_10px_rgba(239,68,68,0.1)]"
+                            >
+                                {passwordLoading ? 'Updating...' : 'Update Password'}
+                            </button>
+                        </div>
+                    </form>
+
+                    {/* Sign Out */}
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-neutral-300">Log out of this device</p>
+                            <p className="text-xs text-neutral-500">You will need to sign in again to access your dashboard.</p>
+                        </div>
+                        <button
+                            onClick={handleSignOut}
+                            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all font-medium"
+                        >
+                            <LogOut className="h-4 w-4" />
+                            Sign Out
+                        </button>
                     </div>
-                    <button
-                        onClick={handleSignOut}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all font-medium"
-                    >
-                        <LogOut className="h-4 w-4" />
-                        Sign Out
-                    </button>
                 </div>
             </div>
         </div>
