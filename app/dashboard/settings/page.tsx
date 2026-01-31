@@ -11,14 +11,21 @@ export default function SettingsPage() {
     const supabase = createClient()
     const [loading, setLoading] = useState(false)
     const [successMessage, setSuccessMessage] = useState('')
+    const [error, setError] = useState('')
     const [plan, setPlan] = useState<string>('free')
 
-
+    const [firstName, setFirstName] = useState('')
+    const [lastName, setLastName] = useState('')
+    const [email, setEmail] = useState('')
 
     useEffect(() => {
-        const fetchPlan = async () => {
+        const fetchUserData = async () => {
             const { data: { user } } = await supabase.auth.getUser()
             if (user) {
+                setEmail(user.email || '')
+                setFirstName(user.user_metadata?.first_name || '')
+                setLastName(user.user_metadata?.last_name || '')
+
                 const { data } = await supabase
                     .from('subscriptions')
                     .select('plan')
@@ -30,7 +37,7 @@ export default function SettingsPage() {
                 }
             }
         }
-        fetchPlan()
+        fetchUserData()
     }, [supabase])
 
     const handleSignOut = async () => {
@@ -41,12 +48,25 @@ export default function SettingsPage() {
     const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
-        // Simulate update
-        setTimeout(() => {
+        setError('')
+        setSuccessMessage('')
+
+        const { error } = await supabase.auth.updateUser({
+            data: {
+                first_name: firstName,
+                last_name: lastName
+            }
+        })
+
+        if (error) {
+            setError(error.message)
+            setLoading(false)
+        } else {
             setLoading(false)
             setSuccessMessage('Profile updated successfully')
             setTimeout(() => setSuccessMessage(''), 3000)
-        }, 1000)
+            router.refresh()
+        }
     }
 
     return (
@@ -66,7 +86,9 @@ export default function SettingsPage() {
                             <label className="text-xs font-medium text-neutral-400 uppercase">First Name</label>
                             <input
                                 type="text"
-                                placeholder="Founder"
+                                placeholder="Start"
+                                value={firstName}
+                                onChange={(e) => setFirstName(e.target.value)}
                                 className="w-full rounded-lg bg-black/50 border border-white/10 px-4 py-2 text-white focus:border-brand-cyan outline-none transition-all placeholder:text-neutral-600"
                             />
                         </div>
@@ -74,28 +96,37 @@ export default function SettingsPage() {
                             <label className="text-xs font-medium text-neutral-400 uppercase">Last Name</label>
                             <input
                                 type="text"
-                                placeholder="One"
+                                placeholder="Founder"
+                                value={lastName}
+                                onChange={(e) => setLastName(e.target.value)}
                                 className="w-full rounded-lg bg-black/50 border border-white/10 px-4 py-2 text-white focus:border-brand-cyan outline-none transition-all placeholder:text-neutral-600"
                             />
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-xs font-medium text-neutral-400 uppercase">Founder Email</label>
+                        <label className="text-xs font-medium text-neutral-400 uppercase">Your Email</label>
                         <input
                             type="email"
                             disabled
-                            value="founder@startup.com"
+                            value={email}
                             className="w-full rounded-lg bg-black/20 border border-white/5 px-4 py-2 text-neutral-500 cursor-not-allowed"
                         />
                     </div>
 
                     <div className="pt-4 flex items-center justify-between">
-                        {successMessage ? (
-                            <span className="text-emerald-400 text-sm flex items-center gap-2">
-                                <Check className="h-4 w-4" /> {successMessage}
-                            </span>
-                        ) : <span></span>}
+                        <div>
+                            {successMessage && (
+                                <span className="text-emerald-400 text-sm flex items-center gap-2">
+                                    <Check className="h-4 w-4" /> {successMessage}
+                                </span>
+                            )}
+                            {error && (
+                                <span className="text-red-400 text-sm flex items-center gap-2">
+                                    <Shield className="h-4 w-4" /> {error}
+                                </span>
+                            )}
+                        </div>
 
                         <button
                             type="submit"
