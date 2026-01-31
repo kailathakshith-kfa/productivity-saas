@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { User, Bell, Shield, LogOut, Check, Zap } from 'lucide-react'
+import { User, Bell, Shield, LogOut, Check, Zap, Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { RazorpayButton } from '@/components/checkout/RazorpayButton'
@@ -23,6 +23,7 @@ export default function SettingsPage() {
     const [passwordLoading, setPasswordLoading] = useState(false)
     const [passwordError, setPasswordError] = useState('')
     const [passwordSuccess, setPasswordSuccess] = useState('')
+    const [showPassword, setShowPassword] = useState(false)
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -295,23 +296,49 @@ export default function SettingsPage() {
                         <div className="grid md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className="text-xs font-medium text-neutral-400 uppercase">New Password</label>
-                                <input
-                                    type="password"
-                                    placeholder="••••••••"
-                                    value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
-                                    className="w-full rounded-lg bg-black/50 border border-white/10 px-4 py-2 text-white focus:border-red-400/50 outline-none transition-all placeholder:text-neutral-600"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="••••••••"
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        className="w-full rounded-lg bg-black/50 border border-white/10 px-4 py-2 text-white focus:border-red-400/50 outline-none transition-all placeholder:text-neutral-600 pr-10"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white transition"
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff className="h-4 w-4" />
+                                        ) : (
+                                            <Eye className="h-4 w-4" />
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-xs font-medium text-neutral-400 uppercase">Confirm Password</label>
-                                <input
-                                    type="password"
-                                    placeholder="••••••••"
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="w-full rounded-lg bg-black/50 border border-white/10 px-4 py-2 text-white focus:border-red-400/50 outline-none transition-all placeholder:text-neutral-600"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="••••••••"
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        className="w-full rounded-lg bg-black/50 border border-white/10 px-4 py-2 text-white focus:border-red-400/50 outline-none transition-all placeholder:text-neutral-600 pr-10"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white transition"
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff className="h-4 w-4" />
+                                        ) : (
+                                            <Eye className="h-4 w-4" />
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
