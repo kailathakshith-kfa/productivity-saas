@@ -5,7 +5,6 @@ import { User, Bell, Shield, LogOut, Check, Zap, Eye, EyeOff } from 'lucide-reac
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { RazorpayButton } from '@/components/checkout/RazorpayButton'
-import { cancelRazorpaySubscription } from '@/lib/actions/payment-actions'
 
 export default function SettingsPage() {
     const router = useRouter()
@@ -25,8 +24,6 @@ export default function SettingsPage() {
     const [passwordError, setPasswordError] = useState('')
     const [passwordSuccess, setPasswordSuccess] = useState('')
     const [showPassword, setShowPassword] = useState(false)
-
-    const [cancelLoading, setCancelLoading] = useState(false)
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -107,22 +104,6 @@ export default function SettingsPage() {
             setTimeout(() => setPasswordSuccess(''), 3000)
         }
         setPasswordLoading(false)
-    }
-
-    const handleCancelSubscription = async () => {
-        if (!confirm('Are you sure you want to stop auto-pay? Your subscription will be cancelled and you will lose premium access immediately.')) return
-
-        setCancelLoading(true)
-        const res = await cancelRazorpaySubscription()
-
-        if (res.error) {
-            setError(res.error)
-        } else {
-            setSuccessMessage('Auto-pay cancelled successfully.')
-            setPlan('free')
-            router.refresh()
-        }
-        setCancelLoading(false)
     }
 
     return (
@@ -228,18 +209,9 @@ export default function SettingsPage() {
                         </ul>
 
                         {plan === 'elite' ? (
-                            <div className="space-y-3">
-                                <button disabled className="w-full rounded-xl bg-blue-500/20 border border-blue-500/50 text-blue-300 font-bold py-2 cursor-default flex items-center justify-center gap-2">
-                                    <Check className="h-4 w-4" /> Current Plan
-                                </button>
-                                <button
-                                    onClick={handleCancelSubscription}
-                                    disabled={cancelLoading}
-                                    className="w-full text-xs text-red-400 hover:text-red-300 underline decoration-red-400/30 underline-offset-4 transition"
-                                >
-                                    {cancelLoading ? 'Cancelling...' : 'Cancel Auto-pay'}
-                                </button>
-                            </div>
+                            <button disabled className="w-full rounded-xl bg-blue-500/20 border border-blue-500/50 text-blue-300 font-bold py-2 cursor-default flex items-center justify-center gap-2">
+                                <Check className="h-4 w-4" /> Current Plan
+                            </button>
                         ) : (
                             <RazorpayButton
                                 planId="elite"
@@ -269,18 +241,9 @@ export default function SettingsPage() {
                         </ul>
 
                         {plan === 'ai_ultimate' ? (
-                            <div className="space-y-3">
-                                <button disabled className="w-full rounded-xl bg-fuchsia-500/20 border border-fuchsia-500/50 text-fuchsia-300 font-bold py-2 cursor-default flex items-center justify-center gap-2">
-                                    <Check className="h-4 w-4" /> Current Plan
-                                </button>
-                                <button
-                                    onClick={handleCancelSubscription}
-                                    disabled={cancelLoading}
-                                    className="w-full text-xs text-red-400 hover:text-red-300 underline decoration-red-400/30 underline-offset-4 transition"
-                                >
-                                    {cancelLoading ? 'Cancelling...' : 'Cancel Auto-pay'}
-                                </button>
-                            </div>
+                            <button disabled className="w-full rounded-xl bg-fuchsia-500/20 border border-fuchsia-500/50 text-fuchsia-300 font-bold py-2 cursor-default flex items-center justify-center gap-2">
+                                <Check className="h-4 w-4" /> Current Plan
+                            </button>
                         ) : (
                             <RazorpayButton
                                 planId="ai_ultimate"
