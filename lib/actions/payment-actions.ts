@@ -171,3 +171,75 @@ export async function forceVerifyPayment(paymentId: string) {
         return { error: error.message || 'Failed to fetch payment' }
     }
 }
+
+export async function cancelRazorpaySubscription() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { error: 'Please login to manage subscription' }
+    }
+
+    // 1. Get current subscription details
+    const { data: subscription } = await supabase
+        .from('subscriptions')
+        .select('subscription_id, plan')
+        .eq('user_id', user.id)
+        .single()
+
+    if (!subscription || !subscription.subscription_id) {
+        return { error: 'No active auto-pay subscription found.' }
+    }
+
+    const keyId = process.env.RAZORPAY_KEY_ID
+    const keySecret = process.env.RAZORPAY_KEY_SECRET
+
+    if (!keyId || !keySecret) {
+        return { error: 'Payment gateway configuration missing' }
+    }
+
+    const razorpay = new Razorpay({
+        key_id: keyId,
+        key_secret: keySecret,
+    })
+
+    try {
+        // 2. Cancel on Razorpay
+        // Note: Razorpay Node SDK subscriptions.cancel(subId, cancelAtCycleEnd)
+        // Passing false to cancel immediately
+        await razorpay.subscriptions.cancel(subscription.subscription_id, false)
+
+        // 3. Update local DB
+        const adminSupabase = createAdminClient()
+
+        if (adminSupabase) {
+            const { error: updateError } = await adminSupabase
+                .from('subscriptions')
+                .update({
+                    status: 'cancelled',
+                    plan: 'free',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('user_id', user.id)
+
+            if (updateError) throw updateError
+        } else {
+            const { error } = await supabase
+                .from('subscriptions')
+                .update({
+                    status: 'cancelled',
+                    plan: 'free',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('user_id', user.id)
+            if (error) throw error
+        }
+
+        revalidatePath('/dashboard')
+        revalidatePath('/dashboard/settings')
+        return { success: true }
+    } catch (error: any) {
+        console.error('Cancel Subscription Error:', error)
+        return { error: `Cancellation failed: ${error.error?.description || error.message}` }
+    }
+}
